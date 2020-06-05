@@ -2,12 +2,13 @@ package ru.psu.org_info_server.services.interfaces;
 
 import ru.psu.org_info_server.model.dto.OrganizationDto;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface OrganizationService {
-    void createOrganization(OrganizationDto newOrganization);
-    void getOrganizationList();
+    UUID createOrganization(OrganizationDto newOrganization);
+    void deleteOrganization(UUID id);
+    List<OrganizationDto> getOrganizationList();
     void getOrganizationTree();
-    void removeOrganization(UUID id);
     void updateOrganization(OrganizationDto updatedOrganization);
 }

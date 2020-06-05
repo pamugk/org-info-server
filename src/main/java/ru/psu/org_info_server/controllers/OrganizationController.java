@@ -2,8 +2,10 @@ package ru.psu.org_info_server.controllers;
 
 import org.springframework.web.bind.annotation.*;
 import ru.psu.org_info_server.model.dto.OrganizationDto;
+import ru.psu.org_info_server.model.dto.Response;
 import ru.psu.org_info_server.services.interfaces.OrganizationService;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -16,13 +18,13 @@ public class OrganizationController {
     }
 
     @PostMapping("/add")
-    public void createOrganization(@RequestBody OrganizationDto newOrganization) {
-        service.createOrganization(newOrganization);
+    public Response<UUID> createOrganization(@RequestBody OrganizationDto newOrganization) {
+        return Response.<UUID>builder().data(service.createOrganization(newOrganization)).build();
     }
 
     @GetMapping("/getList")
-    public void getOrganizationList() {
-        service.getOrganizationList();
+    public Response<List<OrganizationDto>> getOrganizationList() {
+        return Response.<List<OrganizationDto>>builder().data(service.getOrganizationList()).build();
     }
 
     @GetMapping("/getTree")
@@ -32,7 +34,7 @@ public class OrganizationController {
 
     @DeleteMapping("/remove")
     public void removeOrganization(@RequestBody UUID organizationId) {
-        service.removeOrganization(organizationId);
+        service.deleteOrganization(organizationId);
     }
 
     @PutMapping("/update")
