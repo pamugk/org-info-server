@@ -6,30 +6,28 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd
         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 
-    <changeSet author="pamugk" id="2">
-        <preConditions>
+    <changeSet author="pamugk" id="3">
+        <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="employees"/>
             </not>
         </preConditions>
-        <createTable tableName="employees">
-            <column defaultValueComputed="uuid_generate_v4()" name="id" type="UUID">
+        <createTable schemaName="info" tableName="employees">
+            <column defaultValueComputed="public.uuid_generate_v4()" name="id" type="UUID">
                 <constraints primaryKey="true"/>
             </column>
             <column name="name" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
             <column name="organization" type="UUID">
-                <constraints nullable="false" foreignKeyName="fk_organization_employee"
-                             referencedTableName="organizations" referencedColumnNames="id"/>
+                <constraints nullable="false" foreignKeyName="fk_organization_employee" references="info.organizations(id)"/>
             </column>
             <column name="chief" type="UUID">
-                <constraints nullable="false" foreignKeyName="fk_chief_employee"
-                             referencedTableName="employees" referencedColumnNames="id"/>
+                <constraints nullable="false" foreignKeyName="fk_chief_employee" references="info.employees(id)"/>
             </column>
         </createTable>
         <rollback>
-            <dropTable tableName="employees"/>
+            <dropTable schemaName="info" tableName="info.employees"/>
         </rollback>
     </changeSet>
 </databaseChangeLog>

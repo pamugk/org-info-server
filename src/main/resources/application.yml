@@ -10,8 +10,8 @@ spring:
     password: password
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.xml
-    default-schema: public
-    liquibase-schema: public
+  jooq:
+    sql-dialect: postgres
 logging:
   level:
-    liquibase: debug
+    liquibase: info
