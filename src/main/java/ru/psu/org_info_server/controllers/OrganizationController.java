@@ -1,8 +1,11 @@
 package ru.psu.org_info_server.controllers;
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.psu.org_info_server.model.dto.OrganizationDto;
 import ru.psu.org_info_server.model.dto.Response;
+import ru.psu.org_info_server.model.dto.transfer.Exists;
+import ru.psu.org_info_server.model.dto.transfer.New;
 import ru.psu.org_info_server.services.interfaces.OrganizationService;
 
 import java.util.List;
@@ -17,9 +20,14 @@ public class OrganizationController {
         this.service = service;
     }
 
-    @PostMapping("/add")
-    public Response<UUID> createOrganization(@RequestBody OrganizationDto newOrganization) {
+    @PostMapping
+    public Response<UUID> createOrganization(@Validated(New.class) @RequestBody OrganizationDto newOrganization) {
         return Response.<UUID>builder().data(service.createOrganization(newOrganization)).build();
+    }
+
+    @DeleteMapping
+    public void deleteOrganization(@RequestParam UUID id) {
+        service.deleteOrganization(id);
     }
 
     @GetMapping("/getList")
@@ -32,13 +40,8 @@ public class OrganizationController {
         service.getOrganizationTree();
     }
 
-    @DeleteMapping("/remove")
-    public void removeOrganization(@RequestBody UUID organizationId) {
-        service.deleteOrganization(organizationId);
-    }
-
-    @PutMapping("/update")
-    public void updateOrganization(@RequestBody OrganizationDto updatedOrganization) {
+    @PutMapping
+    public void updateOrganization(@Validated(Exists.class) @RequestBody OrganizationDto updatedOrganization) {
         service.updateOrganization(updatedOrganization);
     }
 }

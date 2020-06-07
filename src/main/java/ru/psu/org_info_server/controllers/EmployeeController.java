@@ -1,8 +1,11 @@
 package ru.psu.org_info_server.controllers;
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.psu.org_info_server.model.dto.EmployeeDto;
 import ru.psu.org_info_server.model.dto.Response;
+import ru.psu.org_info_server.model.dto.transfer.Exists;
+import ru.psu.org_info_server.model.dto.transfer.New;
 import ru.psu.org_info_server.services.interfaces.EmployeeService;
 
 import java.util.List;
@@ -17,9 +20,14 @@ public class EmployeeController {
         this.service = service;
     }
 
-    @PostMapping("/add")
-    public Response<UUID> createEmployee(@RequestBody EmployeeDto newEmployee) {
+    @PostMapping
+    public Response<UUID> createEmployee(@Validated(New.class) @RequestBody EmployeeDto newEmployee) {
         return Response.<UUID>builder().data(service.createEmployee(newEmployee)).build();
+    }
+
+    @DeleteMapping
+    public void deleteEmployee(@RequestParam UUID id) {
+        service.deleteEmployee(id);
     }
 
     @GetMapping("/getList")
@@ -32,13 +40,8 @@ public class EmployeeController {
         service.getEmployeeTree();
     }
 
-    @DeleteMapping("/remove")
-    public void removeEmployee(@RequestParam(value = "id") UUID employeeId) {
-        service.deleteEmployee(employeeId);
-    }
-
-    @PutMapping("/update")
-    public void updateEmployee(@RequestBody EmployeeDto updatedEmployee) {
+    @PutMapping
+    public void updateEmployee(@Validated(Exists.class) @RequestBody EmployeeDto updatedEmployee) {
         service.updateEmployee(updatedEmployee);
     }
 }

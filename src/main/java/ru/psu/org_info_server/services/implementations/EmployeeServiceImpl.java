@@ -2,6 +2,9 @@ package ru.psu.org_info_server.services.implementations;
 
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
+import ru.psu.org_info_server.exceptions.HasChildrenException;
+import ru.psu.org_info_server.exceptions.NotFoundException;
+import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
 import ru.psu.org_info_server.model.dto.EmployeeDto;
 import ru.psu.org_info_server.services.interfaces.EmployeeService;
 
@@ -20,6 +23,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public UUID createEmployee(EmployeeDto newEmployee) {
+        if (newEmployee.getChief() != null && Validator.employeeNotFound(context, newEmployee.getChief()))
+            throw new NotFoundException("Chief not found");
+        if (Validator.organizationNotFound(context, newEmployee.getOrganization()))
+            throw new UnacceptableParamsException("Organization not found");
         return context.insertInto(EMPLOYEES)
                 .set(EMPLOYEES.NAME, newEmployee.getName())
                 .set(EMPLOYEES.ORGANIZATION, newEmployee.getOrganization())
@@ -29,6 +36,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public void deleteEmployee(UUID id) {
+        if (Validator.employeeNotFound(context, id))
+            throw new NotFoundException("Employee not found");
+        if (Validator.employeeHasChildren(context, id))
+            throw new HasChildrenException("Employee still has subordinates");
         context.deleteFrom(EMPLOYEES).where(EMPLOYEES.ID.eq(id));
     }
 
@@ -44,6 +55,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public void updateEmployee(EmployeeDto updatedEmployee) {
+        if (Validator.employeeNotFound(context, updatedEmployee.getId()))
+            throw new NotFoundException("Employee not found");
+        if (updatedEmployee.getChief() != null && Validator.employeeNotFound(context, updatedEmployee.getChief()))
+            throw new NotFoundException("Chief not found");
+        if (Validator.organizationNotFound(context, updatedEmployee.getOrganization()))
+            throw new UnacceptableParamsException("Organization not found");
         context.update(EMPLOYEES)
                 .set(EMPLOYEES.NAME, updatedEmployee.getName())
                 .set(EMPLOYEES.ORGANIZATION, updatedEmployee.getChief())

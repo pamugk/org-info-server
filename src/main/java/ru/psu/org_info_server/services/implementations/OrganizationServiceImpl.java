@@ -2,6 +2,8 @@ package ru.psu.org_info_server.services.implementations;
 
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
+import ru.psu.org_info_server.exceptions.HasChildrenException;
+import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.model.dto.OrganizationDto;
 import ru.psu.org_info_server.services.interfaces.OrganizationService;
 
@@ -20,6 +22,8 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public UUID createOrganization(OrganizationDto newOrganization) {
+        if (newOrganization.getParent() != null && Validator.organizationNotFound(context, newOrganization.getParent()))
+            throw new NotFoundException("Parent organization not found");
         return context.insertInto(ORGANIZATIONS)
                 .set(ORGANIZATIONS.NAME, newOrganization.getName())
                 .set(ORGANIZATIONS.PARENT, newOrganization.getParent())
@@ -28,6 +32,11 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public void deleteOrganization(UUID id) {
+        if (Validator.organizationNotFound(context, id))
+            throw new NotFoundException("Organization not found");
+        if (Validator.organizationHasChildren(context, id))
+            throw new HasChildrenException(
+                    "Organization still has children elements (either employees or other organizations)");
         context.deleteFrom(ORGANIZATIONS).where(ORGANIZATIONS.ID.eq(id));
     }
 
@@ -43,6 +52,11 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public void updateOrganization(OrganizationDto updatedOrganization) {
+        if (Validator.organizationNotFound(context, updatedOrganization.getId()))
+            throw new NotFoundException("Organization not found");
+        if (updatedOrganization.getParent() != null
+                && Validator.organizationNotFound(context, updatedOrganization.getParent()))
+            throw new NotFoundException("Parent organization not found");
         context.update(ORGANIZATIONS)
                 .set(ORGANIZATIONS.NAME, updatedOrganization.getName())
                 .set(ORGANIZATIONS.PARENT, updatedOrganization.getParent())
