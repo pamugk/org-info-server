@@ -19,11 +19,15 @@
             <column name="name" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="parent" type="UUID">
-                <constraints foreignKeyName="fk_parent_organization" references="info.organizations(id)"/>
-            </column>
+            <column name="parent" type="UUID"/>
         </createTable>
+        <addForeignKeyConstraint baseTableName="organizations" baseColumnNames="parent" baseTableSchemaName="info"
+                                 constraintName="fk_parent_organization" onDelete="RESTRICT"
+                                 referencedTableName="organizations" referencedColumnNames="id"
+                                 referencedTableSchemaName="info"/>
         <rollback>
+            <dropForeignKeyConstraint baseTableName="organizations" baseTableSchemaName="info"
+                                      constraintName="fk_parent_organization" />
             <dropTable schemaName="info" tableName="organizations"/>
         </rollback>
     </changeSet>

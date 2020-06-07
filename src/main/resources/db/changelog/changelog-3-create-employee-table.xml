@@ -20,14 +20,24 @@
                 <constraints nullable="false"/>
             </column>
             <column name="organization" type="UUID">
-                <constraints nullable="false" foreignKeyName="fk_organization_employee" references="info.organizations(id)"/>
+                <constraints nullable="false"/>
             </column>
-            <column name="chief" type="UUID">
-                <constraints nullable="false" foreignKeyName="fk_chief_employee" references="info.employees(id)"/>
-            </column>
+            <column name="chief" type="UUID"/>
         </createTable>
+        <addForeignKeyConstraint baseTableName="employees" baseColumnNames="organization" baseTableSchemaName="info"
+                                 constraintName="fk_organization_employee" onDelete="RESTRICT"
+                                 referencedTableName="organizations" referencedColumnNames="id"
+                                 referencedTableSchemaName="info"/>
+        <addForeignKeyConstraint baseTableName="employees" baseColumnNames="chief" baseTableSchemaName="info"
+                                 constraintName="fk_chief_employee" onDelete="RESTRICT"
+                                 referencedTableName="employees" referencedColumnNames="id"
+                                 referencedTableSchemaName="info"/>
         <rollback>
-            <dropTable schemaName="info" tableName="info.employees"/>
+            <dropForeignKeyConstraint baseTableName="employees" baseTableSchemaName="info"
+                                      constraintName="fk_organization_employee" />
+            <dropForeignKeyConstraint baseTableName="employees" baseTableSchemaName="info"
+                                      constraintName="fk_chief_employee" />
+            <dropTable schemaName="info" tableName="employees"/>
         </rollback>
     </changeSet>
 </databaseChangeLog>
