@@ -1,13 +1,17 @@
 package ru.psu.org_info_server.services.implementations;
 
-import org.jooq.DSLContext;
+import org.jooq.*;
 import org.springframework.stereotype.Service;
 import ru.psu.org_info_server.exceptions.HasChildrenException;
 import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
+import ru.psu.org_info_server.model.dto.OrgInfoDto;
 import ru.psu.org_info_server.model.dto.OrganizationDto;
+import ru.psu.org_info_server.model.persistence.tables.records.OrganizationsRecord;
 import ru.psu.org_info_server.services.interfaces.OrganizationService;
 
+import static org.jooq.impl.DSL.*;
+import static ru.psu.org_info_server.model.persistence.tables.Employees.EMPLOYEES;
 import static ru.psu.org_info_server.model.persistence.tables.Organizations.ORGANIZATIONS;
 
 import java.util.List;
@@ -42,8 +46,23 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public List<OrganizationDto> getOrganizationList() {
-        return context.select().from(ORGANIZATIONS).fetchInto(OrganizationDto.class);
+    public List<OrgInfoDto> getOrganizationList() {
+        Table<OrganizationsRecord> childrenOrgs = ORGANIZATIONS.as("childrenOrgs");
+            Field<UUID> childId = childrenOrgs.field(ORGANIZATIONS.ID);
+            Field<String> childName = childrenOrgs.field(ORGANIZATIONS.NAME);
+            Field<UUID> childParent = childrenOrgs.field(ORGANIZATIONS.PARENT);
+        Table<OrganizationsRecord> parentOrgs = ORGANIZATIONS.as("parentOrgs");
+            Field<UUID> parentId = parentOrgs.field(ORGANIZATIONS.ID);
+            Field<String> parentName = parentOrgs.field(ORGANIZATIONS.NAME);
+        return context
+                .select(childId, childName,
+                        parentId.as("parentId"), parentName.as("parentName"),
+                        count(EMPLOYEES.ID).as("employeeCount"))
+                .from(childrenOrgs)
+                    .leftJoin(parentOrgs).on(childParent.eq(parentId))
+                    .leftJoin(EMPLOYEES).on(childId.eq(EMPLOYEES.ORGANIZATION))
+                .groupBy(childId, childName, parentId, parentName)
+                .fetchInto(OrgInfoDto.class);
     }
 
     @Override

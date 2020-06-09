@@ -3,9 +3,10 @@ package ru.psu.org_info_server.controllers;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.psu.org_info_server.model.dto.EmployeeDto;
+import ru.psu.org_info_server.model.dto.EmployeeInfoDto;
 import ru.psu.org_info_server.model.dto.Response;
-import ru.psu.org_info_server.model.dto.transfer.Exists;
-import ru.psu.org_info_server.model.dto.transfer.New;
+import ru.psu.org_info_server.model.transfer.Exists;
+import ru.psu.org_info_server.model.transfer.New;
 import ru.psu.org_info_server.services.interfaces.EmployeeService;
 
 import java.util.List;
@@ -31,8 +32,8 @@ public class EmployeeController {
     }
 
     @GetMapping("/getList")
-    public Response<List<EmployeeDto>> getEmployeeList() {
-        return Response.<List<EmployeeDto>>builder().data(service.getEmployeeList()).build();
+    public Response<List<EmployeeInfoDto>> getEmployeeList() {
+        return Response.<List<EmployeeInfoDto>>builder().data(service.getEmployeeList()).build();
     }
 
     @GetMapping("/getTree")
