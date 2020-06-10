@@ -46,8 +46,12 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public List<OrgInfoDto> getOrganizationList() {
-        Table<OrganizationsRecord> childrenOrgs = ORGANIZATIONS.as("childrenOrgs");
+    public List<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search) {
+        CommonTableExpression<Record> childrenOrgs = name("childrenOrgs").as(
+                select().from(ORGANIZATIONS)
+                .where(ORGANIZATIONS.NAME.contains(search))
+                .limit(limit).offset(offset)
+        );
             Field<UUID> childId = childrenOrgs.field(ORGANIZATIONS.ID);
             Field<String> childName = childrenOrgs.field(ORGANIZATIONS.NAME);
             Field<UUID> childParent = childrenOrgs.field(ORGANIZATIONS.PARENT);
@@ -55,6 +59,7 @@ public class OrganizationServiceImpl implements OrganizationService {
             Field<UUID> parentId = parentOrgs.field(ORGANIZATIONS.ID);
             Field<String> parentName = parentOrgs.field(ORGANIZATIONS.NAME);
         return context
+                .with(childrenOrgs)
                 .select(childId, childName,
                         parentId.as("parentId"), parentName.as("parentName"),
                         count(EMPLOYEES.ID).as("employeeCount"))
@@ -62,6 +67,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                     .leftJoin(parentOrgs).on(childParent.eq(parentId))
                     .leftJoin(EMPLOYEES).on(childId.eq(EMPLOYEES.ORGANIZATION))
                 .groupBy(childId, childName, parentId, parentName)
+                .orderBy(childId)
                 .fetchInto(OrgInfoDto.class);
     }
 

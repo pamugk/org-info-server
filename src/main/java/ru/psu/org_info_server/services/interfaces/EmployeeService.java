@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface EmployeeService {
     UUID createEmployee(EmployeeDto newEmployee);
     void deleteEmployee(UUID id);
-    List<EmployeeInfoDto> getEmployeeList();
+    List<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search);
     void getEmployeeTree();
     void updateEmployee(EmployeeDto updatedEmployee);
 }

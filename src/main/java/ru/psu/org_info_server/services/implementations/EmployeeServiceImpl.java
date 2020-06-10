@@ -1,8 +1,6 @@
 package ru.psu.org_info_server.services.implementations;
 
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.Table;
+import org.jooq.*;
 import org.springframework.stereotype.Service;
 import ru.psu.org_info_server.exceptions.HasChildrenException;
 import ru.psu.org_info_server.exceptions.NotFoundException;
@@ -12,6 +10,7 @@ import ru.psu.org_info_server.model.dto.EmployeeInfoDto;
 import ru.psu.org_info_server.model.persistence.tables.records.EmployeesRecord;
 import ru.psu.org_info_server.services.interfaces.EmployeeService;
 
+import static org.jooq.impl.DSL.*;
 import static ru.psu.org_info_server.model.persistence.tables.Employees.EMPLOYEES;
 import static ru.psu.org_info_server.model.persistence.tables.Organizations.ORGANIZATIONS;
 
@@ -49,8 +48,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<EmployeeInfoDto> getEmployeeList() {
-        Table<EmployeesRecord> subordinates = EMPLOYEES.as("subordinates");
+    public List<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search) {
+        CommonTableExpression<Record> subordinates = name("subordinates").as(
+                select().from(EMPLOYEES)
+                .where(EMPLOYEES.NAME.contains(search))
+                .limit(limit).offset(offset)
+        );
             Field<UUID> subId = subordinates.field(EMPLOYEES.ID);
             Field<String> subName = subordinates.field(EMPLOYEES.NAME);
             Field<UUID> subOrgId = subordinates.field(EMPLOYEES.ORGANIZATION);
@@ -59,12 +62,14 @@ public class EmployeeServiceImpl implements EmployeeService {
             Field<UUID> chiefId = chiefs.field(EMPLOYEES.ID);
             Field<String> chiefName = chiefs.field(EMPLOYEES.NAME);
         return context
+                .with(subordinates)
                 .select(subId, subName,
                         subChief, chiefName.as("chiefName"),
                         subOrgId, ORGANIZATIONS.NAME.as("organizationName"))
                 .from(subordinates)
                     .join(ORGANIZATIONS).on(subOrgId.eq(ORGANIZATIONS.ID))
                     .leftJoin(chiefs).on(subChief.eq(chiefId))
+                .orderBy(subId)
                 .fetchInto(EmployeeInfoDto.class);
     }
 

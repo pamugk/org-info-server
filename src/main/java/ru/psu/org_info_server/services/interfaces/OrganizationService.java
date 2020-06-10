@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface OrganizationService {
     UUID createOrganization(OrganizationDto newOrganization);
     void deleteOrganization(UUID id);
-    List<OrgInfoDto> getOrganizationList();
+    List<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search);
     void getOrganizationTree();
     void updateOrganization(OrganizationDto updatedOrganization);
 }

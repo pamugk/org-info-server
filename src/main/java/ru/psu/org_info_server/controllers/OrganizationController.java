@@ -9,11 +9,14 @@ import ru.psu.org_info_server.model.transfer.Exists;
 import ru.psu.org_info_server.model.transfer.New;
 import ru.psu.org_info_server.services.interfaces.OrganizationService;
 
+import javax.validation.constraints.Min;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/organizations")
+@Validated
 public class OrganizationController {
     private final OrganizationService service;
 
@@ -31,12 +34,17 @@ public class OrganizationController {
         service.deleteOrganization(id);
     }
 
-    @GetMapping("/getList")
-    public Response<List<OrgInfoDto>> getOrganizationList() {
-        return Response.<List<OrgInfoDto>>builder().data(service.getOrganizationList()).build();
+    @GetMapping("/list")
+    public Response<List<OrgInfoDto>> getOrganizationList(@RequestParam(defaultValue = "1") @Min(1) int page,
+                                                          @RequestParam Optional<@Min(0) Integer> count,
+                                                          @RequestParam(defaultValue = "") String search) {
+        return Response.<List<OrgInfoDto>>builder()
+                .data(service.getOrganizationList(
+                        count.orElse(null), count.isPresent() ? (page - 1) * count.get() : null, search)
+                ).build();
     }
 
-    @GetMapping("/getTree")
+    @GetMapping("/tree")
     public void getOrganizationTree() {
         service.getOrganizationTree();
     }
