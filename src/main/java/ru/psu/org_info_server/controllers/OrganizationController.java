@@ -2,6 +2,7 @@ package ru.psu.org_info_server.controllers;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.psu.org_info_server.model.dto.ListChunk;
 import ru.psu.org_info_server.model.dto.OrgInfoDto;
 import ru.psu.org_info_server.model.dto.OrganizationDto;
 import ru.psu.org_info_server.model.dto.Response;
@@ -35,10 +36,10 @@ public class OrganizationController {
     }
 
     @GetMapping("/list")
-    public Response<List<OrgInfoDto>> getOrganizationList(@RequestParam(defaultValue = "1") @Min(1) int page,
-                                                          @RequestParam Optional<@Min(0) Integer> count,
-                                                          @RequestParam(defaultValue = "") String search) {
-        return Response.<List<OrgInfoDto>>builder()
+    public Response<ListChunk<OrgInfoDto>> getOrganizationList(@RequestParam(defaultValue = "1") @Min(1) int page,
+                                                               @RequestParam Optional<@Min(0) Integer> count,
+                                                               @RequestParam(defaultValue = "") String search) {
+        return Response.<ListChunk<OrgInfoDto>>builder()
                 .data(service.getOrganizationList(
                         count.orElse(null), count.isPresent() ? (page - 1) * count.get() : null, search)
                 ).build();

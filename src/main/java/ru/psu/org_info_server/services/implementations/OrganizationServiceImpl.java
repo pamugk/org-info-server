@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.psu.org_info_server.exceptions.HasChildrenException;
 import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
+import ru.psu.org_info_server.model.dto.ListChunk;
 import ru.psu.org_info_server.model.dto.OrgInfoDto;
 import ru.psu.org_info_server.model.dto.OrganizationDto;
 import ru.psu.org_info_server.model.persistence.tables.records.OrganizationsRecord;
@@ -46,7 +47,8 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public List<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search) {
+    public ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search) {
+        int count = context.selectCount().from(ORGANIZATIONS).where(ORGANIZATIONS.NAME.contains(search)).fetchOne(0, int.class);
         CommonTableExpression<Record> childrenOrgs = name("childrenOrgs").as(
                 select().from(ORGANIZATIONS)
                 .where(ORGANIZATIONS.NAME.contains(search))
@@ -58,7 +60,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         Table<OrganizationsRecord> parentOrgs = ORGANIZATIONS.as("parentOrgs");
             Field<UUID> parentId = parentOrgs.field(ORGANIZATIONS.ID);
             Field<String> parentName = parentOrgs.field(ORGANIZATIONS.NAME);
-        return context
+        List<OrgInfoDto> chunk = context
                 .with(childrenOrgs)
                 .select(childId, childName,
                         parentId.as("parentId"), parentName.as("parentName"),
@@ -69,6 +71,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                 .groupBy(childId, childName, parentId, parentName)
                 .orderBy(childId)
                 .fetchInto(OrgInfoDto.class);
+        return ListChunk.<OrgInfoDto>builder().totalCount(count).dataChunk(chunk).build();
     }
 
     @Override

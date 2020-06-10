@@ -4,6 +4,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.psu.org_info_server.model.dto.EmployeeDto;
 import ru.psu.org_info_server.model.dto.EmployeeInfoDto;
+import ru.psu.org_info_server.model.dto.ListChunk;
 import ru.psu.org_info_server.model.dto.Response;
 import ru.psu.org_info_server.model.transfer.Exists;
 import ru.psu.org_info_server.model.transfer.New;
@@ -35,10 +36,10 @@ public class EmployeeController {
     }
 
     @GetMapping("/list")
-    public Response<List<EmployeeInfoDto>> getEmployeeList(@RequestParam(defaultValue = "1") @Min(1) int page,
-                                                           @RequestParam Optional<@Min(0) Integer> count,
-                                                           @RequestParam(defaultValue = "") String search) {
-        return Response.<List<EmployeeInfoDto>>builder()
+    public Response<ListChunk<EmployeeInfoDto>> getEmployeeList(@RequestParam(defaultValue = "1") @Min(1) int page,
+                                                                @RequestParam Optional<@Min(0) Integer> count,
+                                                                @RequestParam(defaultValue = "") String search) {
+        return Response.<ListChunk<EmployeeInfoDto>>builder()
                 .data(service.getEmployeeList(
                         count.orElse(null), count.isPresent() ? (page - 1) * count.get() : null, search)
                 ).build();

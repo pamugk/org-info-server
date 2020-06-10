@@ -7,6 +7,7 @@ import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
 import ru.psu.org_info_server.model.dto.EmployeeDto;
 import ru.psu.org_info_server.model.dto.EmployeeInfoDto;
+import ru.psu.org_info_server.model.dto.ListChunk;
 import ru.psu.org_info_server.model.persistence.tables.records.EmployeesRecord;
 import ru.psu.org_info_server.services.interfaces.EmployeeService;
 
@@ -52,7 +53,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public List<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search) {
+    public ListChunk<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search) {
+        int count = context.selectCount().from(EMPLOYEES).where(EMPLOYEES.NAME.contains(search)).fetchOne(0, int.class);
         CommonTableExpression<Record> subordinates = name("subordinates").as(
                 select().from(EMPLOYEES)
                 .where(EMPLOYEES.NAME.contains(search))
@@ -65,16 +67,16 @@ public class EmployeeServiceImpl implements EmployeeService {
         Table<EmployeesRecord> chiefs = EMPLOYEES.as("chiefs");
             Field<UUID> chiefId = chiefs.field(EMPLOYEES.ID);
             Field<String> chiefName = chiefs.field(EMPLOYEES.NAME);
-        return context
+        List<EmployeeInfoDto> chunk = context
                 .with(subordinates)
-                .select(subId, subName,
-                        subChief, chiefName.as("chiefName"),
+                .select(subId, subName, subChief, chiefName.as("chiefName"),
                         subOrgId, ORGANIZATIONS.NAME.as("organizationName"))
                 .from(subordinates)
                     .join(ORGANIZATIONS).on(subOrgId.eq(ORGANIZATIONS.ID))
                     .leftJoin(chiefs).on(subChief.eq(chiefId))
                 .orderBy(subId)
                 .fetchInto(EmployeeInfoDto.class);
+        return ListChunk.<EmployeeInfoDto>builder().totalCount(count).dataChunk(chunk).build();
     }
 
     @Override
