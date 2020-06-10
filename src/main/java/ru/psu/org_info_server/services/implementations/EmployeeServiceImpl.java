@@ -2,6 +2,8 @@ package ru.psu.org_info_server.services.implementations;
 
 import org.jooq.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Transactional;
 import ru.psu.org_info_server.exceptions.HasChildrenException;
 import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
@@ -19,6 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@EnableTransactionManagement
 public class EmployeeServiceImpl implements EmployeeService {
     private final DSLContext context;
 
@@ -80,6 +83,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
     public List<TreeNode<EmployeeDto>> getEmployeeTree(UUID rootId) {
         if (rootId != null && Validator.employeeNotFound(context, rootId))
             throw new NotFoundException("Chief not found");

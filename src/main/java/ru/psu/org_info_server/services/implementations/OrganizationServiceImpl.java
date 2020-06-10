@@ -2,6 +2,8 @@ package ru.psu.org_info_server.services.implementations;
 
 import org.jooq.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Transactional;
 import ru.psu.org_info_server.exceptions.HasChildrenException;
 import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
@@ -18,6 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@EnableTransactionManagement
 public class OrganizationServiceImpl implements OrganizationService {
     private final DSLContext context;
 
@@ -46,6 +49,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
+    @Transactional
     public ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search) {
         int count = context.selectCount().from(ORGANIZATIONS).where(ORGANIZATIONS.NAME.contains(search)).fetchOne(0, int.class);
         CommonTableExpression<Record> childrenOrgs = name("childrenOrgs").as(
@@ -74,6 +78,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
+    @Transactional
     public List<TreeNode<OrganizationDto>> getOrganizationTree(UUID rootId) {
         if (rootId != null && Validator.organizationNotFound(context, rootId))
             throw new NotFoundException("Organization not found");
