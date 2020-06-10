@@ -8,8 +8,8 @@ import ru.psu.org_info_server.exceptions.HasChildrenException;
 import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
 import ru.psu.org_info_server.model.dto.*;
+import ru.psu.org_info_server.model.persistence.tables.Employees;
 import ru.psu.org_info_server.model.persistence.tables.records.EmployeesRecord;
-import ru.psu.org_info_server.model.persistence.tables.records.OrganizationsRecord;
 import ru.psu.org_info_server.services.interfaces.EmployeeService;
 
 import static org.jooq.impl.DSL.*;
@@ -56,6 +56,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
     public ListChunk<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search) {
         int count = context.selectCount().from(EMPLOYEES).where(EMPLOYEES.NAME.contains(search)).fetchOne(0, int.class);
         CommonTableExpression<Record> subordinates = name("subordinates").as(
@@ -87,23 +88,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     public List<TreeNode<EmployeeDto>> getEmployeeTree(UUID rootId) {
         if (rootId != null && Validator.employeeNotFound(context, rootId))
             throw new NotFoundException("Chief not found");
-        CommonTableExpression<Record> chiefs = name("chiefs").as(
-                select().from(EMPLOYEES)
-                .where(rootId == null ? EMPLOYEES.CHIEF.isNull() : EMPLOYEES.CHIEF.eq(rootId))
-        );
-            Field<UUID> chiefId = chiefs.field(EMPLOYEES.ID);
-            Field<String> chiefName = chiefs.field(EMPLOYEES.NAME);
-            Field<UUID> chiefOrganization = chiefs.field(EMPLOYEES.ORGANIZATION);
-        Table<OrganizationsRecord> subordinates = ORGANIZATIONS.as("subordinates");
-            Field<UUID> subordinateChief = subordinates.field(EMPLOYEES.CHIEF);
+        Employees chiefs = EMPLOYEES.as("chiefs");
+        Condition chiefCondition = rootId == null ? chiefs.CHIEF.isNull() : chiefs.CHIEF.eq(rootId);
         return context
-                .with(chiefs)
-                .select(chiefId, chiefName, chiefOrganization,
-                        field(count(subordinateChief).greaterThan(0)).as("hasChildren"))
+                .select(chiefs.ID, chiefs.NAME, chiefs.ORGANIZATION,
+                        field(exists(selectFrom(EMPLOYEES).where(chiefs.ID.eq(EMPLOYEES.CHIEF)))))
                 .from(chiefs)
-                .leftJoin(subordinates).on(chiefId.eq(subordinateChief))
-                .groupBy(chiefId, chiefName, chiefOrganization)
-                .orderBy(chiefId)
+                .where(chiefCondition)
+                .orderBy(chiefs.ID)
                 .fetchStream().map(
                         record -> TreeNode.<EmployeeDto>builder().value(
                                 EmployeeDto.builder().id(record.value1())
@@ -118,9 +110,9 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new NotFoundException("Employee not found");
         if (updatedEmployee.getChief() != null) {
             if (Validator.employeeNotFound(context, updatedEmployee.getChief()))
-                throw new NotFoundException("Chief not found");
+                throw new UnacceptableParamsException("Chief not found");
             if (Validator.employeeNotInOrganization(context, updatedEmployee.getChief(), updatedEmployee.getOrganization()))
-                throw new NotFoundException("Chief not in the same organization");
+                throw new UnacceptableParamsException("Chief not in the same organization");
         }
         if (Validator.organizationNotFound(context, updatedEmployee.getOrganization()))
             throw new UnacceptableParamsException("Organization not found");

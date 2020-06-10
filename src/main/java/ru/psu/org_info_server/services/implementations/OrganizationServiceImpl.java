@@ -8,6 +8,7 @@ import ru.psu.org_info_server.exceptions.HasChildrenException;
 import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
 import ru.psu.org_info_server.model.dto.*;
+import ru.psu.org_info_server.model.persistence.tables.Organizations;
 import ru.psu.org_info_server.model.persistence.tables.records.OrganizationsRecord;
 import ru.psu.org_info_server.services.interfaces.OrganizationService;
 
@@ -82,22 +83,15 @@ public class OrganizationServiceImpl implements OrganizationService {
     public List<TreeNode<OrganizationDto>> getOrganizationTree(UUID rootId) {
         if (rootId != null && Validator.organizationNotFound(context, rootId))
             throw new NotFoundException("Organization not found");
-        CommonTableExpression<Record> parentOrgs = name("parentOrgs").as(
-                select().from(ORGANIZATIONS)
-                .where(rootId == null ? ORGANIZATIONS.PARENT.isNull() : ORGANIZATIONS.PARENT.eq(rootId))
-        );
-            Field<UUID> parentId = parentOrgs.field(ORGANIZATIONS.ID);
-            Field<String> parentName = parentOrgs.field(ORGANIZATIONS.NAME);
-        Table<OrganizationsRecord> childrenOrgs = ORGANIZATIONS.as("childrenOrgs");
-            Field<UUID> childParent = childrenOrgs.field(ORGANIZATIONS.PARENT);
-       return context
-                .with(parentOrgs)
-                .select(parentId, parentName, field(count(childParent).greaterThan(0)).as("hasChildren"))
-                .from(parentOrgs)
-                .leftJoin(childrenOrgs).on(parentId.eq(childParent))
-                .groupBy(parentId, parentName)
-                .orderBy(parentId)
-                .fetchStream().map(
+        Organizations parentOrgs = ORGANIZATIONS.as("parentOrgs");
+        Condition parentCondition = rootId == null ? parentOrgs.PARENT.isNull() : parentOrgs.PARENT.eq(rootId);
+        return context
+               .select(parentOrgs.ID, parentOrgs.NAME,
+                       field(exists(selectFrom(ORGANIZATIONS).where(parentOrgs.ID.eq(ORGANIZATIONS.PARENT)))))
+               .from(parentOrgs)
+               .where(parentCondition)
+               .orderBy(parentOrgs.ID)
+               .fetchStream().map(
                         record -> TreeNode.<OrganizationDto>builder().value(
                                 OrganizationDto.builder().id(record.value1()).name(record.value2()).parent(rootId).build()
                         ).hasChildren(record.value3()).build()
