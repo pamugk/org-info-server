@@ -27,10 +27,14 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public UUID createEmployee(EmployeeDto newEmployee) {
-        if (newEmployee.getChief() != null && Validator.employeeNotFound(context, newEmployee.getChief()))
-            throw new NotFoundException("Chief not found");
         if (Validator.organizationNotFound(context, newEmployee.getOrganization()))
             throw new UnacceptableParamsException("Organization not found");
+        if (newEmployee.getChief() != null) {
+            if (Validator.employeeNotFound(context, newEmployee.getChief()))
+                throw new NotFoundException("Chief not found");
+            if (Validator.employeeNotInOrganization(context, newEmployee.getChief(), newEmployee.getOrganization()))
+                throw new NotFoundException("Chief not in the same organization");
+        }
         return context.insertInto(EMPLOYEES)
                 .set(EMPLOYEES.NAME, newEmployee.getName())
                 .set(EMPLOYEES.ORGANIZATION, newEmployee.getOrganization())
@@ -82,8 +86,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void updateEmployee(EmployeeDto updatedEmployee) {
         if (Validator.employeeNotFound(context, updatedEmployee.getId()))
             throw new NotFoundException("Employee not found");
-        if (updatedEmployee.getChief() != null && Validator.employeeNotFound(context, updatedEmployee.getChief()))
-            throw new NotFoundException("Chief not found");
+        if (updatedEmployee.getChief() != null) {
+            if (Validator.employeeNotFound(context, updatedEmployee.getChief()))
+                throw new NotFoundException("Chief not found");
+            if (Validator.employeeNotInOrganization(context, updatedEmployee.getChief(), updatedEmployee.getOrganization()))
+                throw new NotFoundException("Chief not in the same organization");
+        }
         if (Validator.organizationNotFound(context, updatedEmployee.getOrganization()))
             throw new UnacceptableParamsException("Organization not found");
         context.update(EMPLOYEES)

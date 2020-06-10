@@ -12,6 +12,10 @@ class Validator {
         return !context.fetchExists(EMPLOYEES.where(EMPLOYEES.ID.eq(id)));
     }
 
+    static boolean employeeNotInOrganization(DSLContext context, UUID employeeId, UUID orgId) {
+        return !context.fetchExists(EMPLOYEES.where(EMPLOYEES.ID.eq(employeeId).and(EMPLOYEES.ORGANIZATION.eq(orgId))));
+    }
+
     static boolean employeeHasChildren(DSLContext context, UUID id) {
         return context.fetchExists(EMPLOYEES.where(EMPLOYEES.CHIEF.eq(id)));
     }
