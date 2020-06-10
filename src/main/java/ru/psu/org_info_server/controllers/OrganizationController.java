@@ -2,10 +2,7 @@ package ru.psu.org_info_server.controllers;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.psu.org_info_server.model.dto.ListChunk;
-import ru.psu.org_info_server.model.dto.OrgInfoDto;
-import ru.psu.org_info_server.model.dto.OrganizationDto;
-import ru.psu.org_info_server.model.dto.Response;
+import ru.psu.org_info_server.model.dto.*;
 import ru.psu.org_info_server.model.transfer.Exists;
 import ru.psu.org_info_server.model.transfer.New;
 import ru.psu.org_info_server.services.interfaces.OrganizationService;
@@ -46,8 +43,8 @@ public class OrganizationController {
     }
 
     @GetMapping("/tree")
-    public void getOrganizationTree() {
-        service.getOrganizationTree();
+    public Response<List<TreeNode<OrganizationDto>>> getOrganizationTree(@RequestParam(required = false) UUID id) {
+        return Response.<List<TreeNode<OrganizationDto>>>builder().data(service.getOrganizationTree(id)).build();
     }
 
     @PutMapping

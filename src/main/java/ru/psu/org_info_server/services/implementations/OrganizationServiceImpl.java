@@ -5,9 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.psu.org_info_server.exceptions.HasChildrenException;
 import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
-import ru.psu.org_info_server.model.dto.ListChunk;
-import ru.psu.org_info_server.model.dto.OrgInfoDto;
-import ru.psu.org_info_server.model.dto.OrganizationDto;
+import ru.psu.org_info_server.model.dto.*;
 import ru.psu.org_info_server.model.persistence.tables.records.OrganizationsRecord;
 import ru.psu.org_info_server.services.interfaces.OrganizationService;
 
@@ -17,6 +15,7 @@ import static ru.psu.org_info_server.model.persistence.tables.Organizations.ORGA
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class OrganizationServiceImpl implements OrganizationService {
@@ -75,8 +74,29 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public void getOrganizationTree() {
-
+    public List<TreeNode<OrganizationDto>> getOrganizationTree(UUID rootId) {
+        if (rootId != null && Validator.organizationNotFound(context, rootId))
+            throw new NotFoundException("Organization not found");
+        CommonTableExpression<Record> parentOrgs = name("parentOrgs").as(
+                select().from(ORGANIZATIONS)
+                .where(rootId == null ? ORGANIZATIONS.PARENT.isNull() : ORGANIZATIONS.PARENT.eq(rootId))
+        );
+            Field<UUID> parentId = parentOrgs.field(ORGANIZATIONS.ID);
+            Field<String> parentName = parentOrgs.field(ORGANIZATIONS.NAME);
+        Table<OrganizationsRecord> childrenOrgs = ORGANIZATIONS.as("childrenOrgs");
+            Field<UUID> childParent = childrenOrgs.field(ORGANIZATIONS.PARENT);
+       return context
+                .with(parentOrgs)
+                .select(parentId, parentName, field(count(childParent).greaterThan(0)).as("hasChildren"))
+                .from(parentOrgs)
+                .leftJoin(childrenOrgs).on(parentId.eq(childParent))
+                .groupBy(parentId, parentName)
+                .orderBy(parentId)
+                .fetchStream().map(
+                        record -> TreeNode.<OrganizationDto>builder().value(
+                                OrganizationDto.builder().id(record.value1()).name(record.value2()).parent(rootId).build()
+                        ).hasChildren(record.value3()).build()
+               ).collect(Collectors.toList());
     }
 
     @Override

@@ -5,10 +5,9 @@ import org.springframework.stereotype.Service;
 import ru.psu.org_info_server.exceptions.HasChildrenException;
 import ru.psu.org_info_server.exceptions.NotFoundException;
 import ru.psu.org_info_server.exceptions.UnacceptableParamsException;
-import ru.psu.org_info_server.model.dto.EmployeeDto;
-import ru.psu.org_info_server.model.dto.EmployeeInfoDto;
-import ru.psu.org_info_server.model.dto.ListChunk;
+import ru.psu.org_info_server.model.dto.*;
 import ru.psu.org_info_server.model.persistence.tables.records.EmployeesRecord;
+import ru.psu.org_info_server.model.persistence.tables.records.OrganizationsRecord;
 import ru.psu.org_info_server.services.interfaces.EmployeeService;
 
 import static org.jooq.impl.DSL.*;
@@ -17,6 +16,7 @@ import static ru.psu.org_info_server.model.persistence.tables.Organizations.ORGA
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -80,8 +80,32 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public void getEmployeeTree() {
-
+    public List<TreeNode<EmployeeDto>> getEmployeeTree(UUID rootId) {
+        if (rootId != null && Validator.employeeNotFound(context, rootId))
+            throw new NotFoundException("Chief not found");
+        CommonTableExpression<Record> chiefs = name("chiefs").as(
+                select().from(EMPLOYEES)
+                .where(rootId == null ? EMPLOYEES.CHIEF.isNull() : EMPLOYEES.CHIEF.eq(rootId))
+        );
+            Field<UUID> chiefId = chiefs.field(EMPLOYEES.ID);
+            Field<String> chiefName = chiefs.field(EMPLOYEES.NAME);
+            Field<UUID> chiefOrganization = chiefs.field(EMPLOYEES.ORGANIZATION);
+        Table<OrganizationsRecord> subordinates = ORGANIZATIONS.as("subordinates");
+            Field<UUID> subordinateChief = subordinates.field(EMPLOYEES.CHIEF);
+        return context
+                .with(chiefs)
+                .select(chiefId, chiefName, chiefOrganization,
+                        field(count(subordinateChief).greaterThan(0)).as("hasChildren"))
+                .from(chiefs)
+                .leftJoin(subordinates).on(chiefId.eq(subordinateChief))
+                .groupBy(chiefId, chiefName, chiefOrganization)
+                .orderBy(chiefId)
+                .fetchStream().map(
+                        record -> TreeNode.<EmployeeDto>builder().value(
+                                EmployeeDto.builder().id(record.value1())
+                                        .name(record.value2()).organization(record.value3()).chief(rootId).build()
+                        ).hasChildren(record.value4()).build()
+                ).collect(Collectors.toList());
     }
 
     @Override

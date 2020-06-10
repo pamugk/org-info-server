@@ -2,10 +2,7 @@ package ru.psu.org_info_server.controllers;
 
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.psu.org_info_server.model.dto.EmployeeDto;
-import ru.psu.org_info_server.model.dto.EmployeeInfoDto;
-import ru.psu.org_info_server.model.dto.ListChunk;
-import ru.psu.org_info_server.model.dto.Response;
+import ru.psu.org_info_server.model.dto.*;
 import ru.psu.org_info_server.model.transfer.Exists;
 import ru.psu.org_info_server.model.transfer.New;
 import ru.psu.org_info_server.services.interfaces.EmployeeService;
@@ -47,8 +44,8 @@ public class EmployeeController {
 
     
     @GetMapping("/tree")
-    public void getEmployeeTree(@RequestParam Optional<UUID> rootId) {
-        service.getEmployeeTree();
+    public Response<List<TreeNode<EmployeeDto>>> getEmployeeTree(@RequestParam(required = false) UUID id) {
+         return Response.<List<TreeNode<EmployeeDto>>>builder().data(service.getEmployeeTree(id)).build();
     }
 
     @PutMapping
