@@ -5,13 +5,15 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-    url: jdbc:postgresql://localhost:5432/data
-    username: client
-    password: password
+    url: postgres://ec2-54-75-246-118.eu-west-1.compute.amazonaws.com:5432/d6e224k0f3pqf8
+    username: qzmthqjrlkecdp
+    password: 007b77b3a574fad52bbb2c32c845b0d695da946a9f3e6262ccf304b5cb5479ea
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.xml
   jooq:
     sql-dialect: postgres
+server:
+  port: 8081
 logging:
   level:
     liquibase: info
