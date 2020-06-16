@@ -33,13 +33,11 @@ public class EmployeeController {
     }
 
     @GetMapping("/list")
-    public Response<ListChunk<EmployeeInfoDto>> getEmployeeList(@RequestParam(defaultValue = "1") @Min(1) int page,
-                                                                @RequestParam Optional<@Min(0) Integer> count,
+    public Response<ListChunk<EmployeeInfoDto>> getEmployeeList(@RequestParam(defaultValue = "0") @Min(0) int offset,
+                                                                @RequestParam Optional<@Min(0) Integer> limit,
                                                                 @RequestParam(defaultValue = "") String search) {
         return Response.<ListChunk<EmployeeInfoDto>>builder()
-                .data(service.getEmployeeList(
-                        count.orElse(null), count.isPresent() ? (page - 1) * count.get() : null, search)
-                ).build();
+                .data(service.getEmployeeList(limit.orElse(null), offset, search)).build();
     }
 
     

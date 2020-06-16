@@ -33,13 +33,11 @@ public class OrganizationController {
     }
 
     @GetMapping("/list")
-    public Response<ListChunk<OrgInfoDto>> getOrganizationList(@RequestParam(defaultValue = "1") @Min(1) int page,
-                                                               @RequestParam Optional<@Min(0) Integer> count,
+    public Response<ListChunk<OrgInfoDto>> getOrganizationList(@RequestParam(defaultValue = "0") @Min(0) int offset,
+                                                               @RequestParam Optional<@Min(0) Integer> limit,
                                                                @RequestParam(defaultValue = "") String search) {
         return Response.<ListChunk<OrgInfoDto>>builder()
-                .data(service.getOrganizationList(
-                        count.orElse(null), count.isPresent() ? (page - 1) * count.get() : null, search)
-                ).build();
+                .data(service.getOrganizationList(limit.orElse(null), offset, search)).build();
     }
 
     @GetMapping("/tree")
