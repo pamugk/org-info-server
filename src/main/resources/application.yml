@@ -5,9 +5,9 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-    url: jdbc:postgresql://ec2-54-75-246-118.eu-west-1.compute.amazonaws.com:5432/d6e224k0f3pqf8
-    username: qzmthqjrlkecdp
-    password: 007b77b3a574fad52bbb2c32c845b0d695da946a9f3e6262ccf304b5cb5479ea
+    url: jdbc:postgresql://ec2-54-247-71-245.eu-west-1.compute.amazonaws.com:5432/d6eeoui9l20qbi
+    username: apokjvnuiweyyd
+    password: 41a71207bc0f9d7520ce0a2558331997df81adc4c090697d5d2ccd9834035099
     tomcat:
       initial-size: 5
       max-active: 10
