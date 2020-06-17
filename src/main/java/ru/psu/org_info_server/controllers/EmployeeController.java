@@ -32,6 +32,11 @@ public class EmployeeController {
         service.deleteEmployee(id);
     }
 
+    @GetMapping
+    public Response<EmployeeInfoDto> getEmployeeInfo(@RequestParam UUID id) {
+        return Response.<EmployeeInfoDto>builder().data(service.getEmployeeInfo(id)).build();
+    }
+
     @GetMapping("/list")
     public Response<ListChunk<EmployeeInfoDto>> getEmployeeList(@RequestParam(defaultValue = "0") @Min(0) int offset,
                                                                 @RequestParam Optional<@Min(0) Integer> limit,

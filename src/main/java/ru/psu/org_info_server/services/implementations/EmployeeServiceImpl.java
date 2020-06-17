@@ -32,12 +32,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public UUID createEmployee(EmployeeDto newEmployee) {
         if (Validator.organizationNotFound(context, newEmployee.getOrganization()))
-            throw new UnacceptableParamsException("Organization not found");
+            throw new UnacceptableParamsException("Организация не найдена");
         if (newEmployee.getChief() != null) {
             if (Validator.employeeNotFound(context, newEmployee.getChief()))
-                throw new NotFoundException("Chief not found");
+                throw new NotFoundException("Руководитель не найден");
             if (Validator.employeeNotInOrganization(context, newEmployee.getChief(), newEmployee.getOrganization()))
-                throw new NotFoundException("Chief not in the same organization");
+                throw new NotFoundException("Руководитель из другой организации, что недопустимо");
         }
         return context.insertInto(EMPLOYEES)
                 .set(EMPLOYEES.NAME, newEmployee.getName())
@@ -49,10 +49,35 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public void deleteEmployee(UUID id) {
         if (Validator.employeeNotFound(context, id))
-            throw new NotFoundException("Employee not found");
+            throw new NotFoundException("Удаляемый сотрудник не найден");
         if (Validator.employeeHasChildren(context, id))
-            throw new HasChildrenException("Employee still has subordinates");
+            throw new HasChildrenException("У сотрудника ещё есть подчинённые");
         context.deleteFrom(EMPLOYEES).where(EMPLOYEES.ID.eq(id));
+    }
+
+    @Override
+    public EmployeeInfoDto getEmployeeInfo(UUID id) {
+        CommonTableExpression<Record> employee = name("employee").as(
+                select().from(EMPLOYEES).where(EMPLOYEES.ID.eq(id))
+        );
+            Field<UUID> empId = employee.field(EMPLOYEES.ID);
+            Field<String> name = employee.field(EMPLOYEES.NAME);
+            Field<UUID> org = employee.field(EMPLOYEES.ORGANIZATION);
+            Field<UUID> chief = employee.field(EMPLOYEES.CHIEF);
+        Table<EmployeesRecord> chiefs = EMPLOYEES.as("chiefs");
+            Field<UUID> chiefId = chiefs.field(EMPLOYEES.ID);
+            Field<String> chiefName = chiefs.field(EMPLOYEES.NAME);
+        EmployeeInfoDto result = context
+                .with(employee)
+                .select(empId, name, chief, chiefName.as("chiefName"),
+                        org, ORGANIZATIONS.NAME.as("organizationName"))
+                .from(employee)
+                    .join(ORGANIZATIONS).on(org.eq(ORGANIZATIONS.ID))
+                    .leftJoin(chiefs).on(chief.eq(chiefId))
+                .fetchOneInto(EmployeeInfoDto.class);
+        if (result == null)
+            throw new NotFoundException("Запрашиваемый сотрудник не найден");
+        return result;
     }
 
     @Override
@@ -87,7 +112,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional
     public List<TreeNode<EmployeeDto>> getEmployeeTree(UUID rootId) {
         if (rootId != null && Validator.employeeNotFound(context, rootId))
-            throw new NotFoundException("Chief not found");
+            throw new NotFoundException("Руководитель не найден");
         Employees chiefs = EMPLOYEES.as("chiefs");
         Condition chiefCondition = rootId == null ? chiefs.CHIEF.isNull() : chiefs.CHIEF.eq(rootId);
         return context
@@ -107,15 +132,17 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public void updateEmployee(EmployeeDto updatedEmployee) {
         if (Validator.employeeNotFound(context, updatedEmployee.getId()))
-            throw new NotFoundException("Employee not found");
+            throw new NotFoundException("Обновляемый сотрудник не найден");
         if (updatedEmployee.getChief() != null) {
+            if (updatedEmployee.getId().equals(updatedEmployee.getChief()))
+                throw new UnacceptableParamsException("Сотрудник не может быть руководителем самому себе, это дурдом");
             if (Validator.employeeNotFound(context, updatedEmployee.getChief()))
-                throw new UnacceptableParamsException("Chief not found");
+                throw new UnacceptableParamsException("Руководитель не найден");
             if (Validator.employeeNotInOrganization(context, updatedEmployee.getChief(), updatedEmployee.getOrganization()))
-                throw new UnacceptableParamsException("Chief not in the same organization");
+                throw new UnacceptableParamsException("Руководитель из другой организации, что недопустимо");
         }
         if (Validator.organizationNotFound(context, updatedEmployee.getOrganization()))
-            throw new UnacceptableParamsException("Organization not found");
+            throw new UnacceptableParamsException("Организация не найдена");
         context.update(EMPLOYEES)
                 .set(EMPLOYEES.NAME, updatedEmployee.getName())
                 .set(EMPLOYEES.ORGANIZATION, updatedEmployee.getChief())

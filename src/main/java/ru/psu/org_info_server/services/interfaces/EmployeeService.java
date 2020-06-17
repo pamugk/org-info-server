@@ -11,6 +11,7 @@ import java.util.UUID;
 public interface EmployeeService {
     UUID createEmployee(EmployeeDto newEmployee);
     void deleteEmployee(UUID id);
+    EmployeeInfoDto getEmployeeInfo(UUID id);
     ListChunk<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search);
     List<TreeNode<EmployeeDto>> getEmployeeTree(UUID rootId);
     void updateEmployee(EmployeeDto updatedEmployee);

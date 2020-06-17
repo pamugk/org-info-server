@@ -32,6 +32,11 @@ public class OrganizationController {
         service.deleteOrganization(id);
     }
 
+    @GetMapping
+    public Response<OrgInfoDto> getInfo(@RequestParam UUID id) {
+        return Response.<OrgInfoDto>builder().data(service.getOrganizationInfo(id)).build();
+    }
+
     @GetMapping("/list")
     public Response<ListChunk<OrgInfoDto>> getOrganizationList(@RequestParam(defaultValue = "0") @Min(0) int offset,
                                                                @RequestParam Optional<@Min(0) Integer> limit,

@@ -32,7 +32,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public UUID createOrganization(OrganizationDto newOrganization) {
         if (newOrganization.getParent() != null && Validator.organizationNotFound(context, newOrganization.getParent()))
-            throw new UnacceptableParamsException("Parent organization not found");
+            throw new UnacceptableParamsException("Головная организация не найдена");
         return context.insertInto(ORGANIZATIONS)
                 .set(ORGANIZATIONS.NAME, newOrganization.getName())
                 .set(ORGANIZATIONS.PARENT, newOrganization.getParent())
@@ -45,8 +45,31 @@ public class OrganizationServiceImpl implements OrganizationService {
             throw new NotFoundException("Organization not found");
         if (Validator.organizationHasChildren(context, id))
             throw new HasChildrenException(
-                    "Organization still has children elements (either employees or other organizations)");
+                    "У организации ещё есть дочерние элементы (организации или сотрудники)");
         context.deleteFrom(ORGANIZATIONS).where(ORGANIZATIONS.ID.eq(id));
+    }
+
+    @Override
+    public OrgInfoDto getOrganizationInfo(UUID id) {
+        CommonTableExpression<Record> org = name("childrenOrg").as(
+                select().from(ORGANIZATIONS).where(ORGANIZATIONS.ID.eq(id))
+        );
+            Field<UUID> orgId = org.field(ORGANIZATIONS.ID);
+            Field<String> name = org.field(ORGANIZATIONS.NAME);
+            Field<UUID> parent = org.field(ORGANIZATIONS.PARENT);
+        Table<OrganizationsRecord> parentOrgs = ORGANIZATIONS.as("parentOrgs");
+            Field<UUID> parentId = parentOrgs.field(ORGANIZATIONS.ID);
+            Field<String> parentName = parentOrgs.field(ORGANIZATIONS.NAME);
+        OrgInfoDto result = context
+                .with(org)
+                .select(orgId, name, parent.as("parentId"), parentName.as("parentName"))
+                .from(org)
+                .leftJoin(parentOrgs)
+                .on(parent.eq(parentId))
+                .fetchOneInto(OrgInfoDto.class);
+        if (result == null)
+            throw new NotFoundException("Запрашиваемая организация не найдена");
+        return result;
     }
 
     @Override
@@ -82,7 +105,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Transactional
     public List<TreeNode<OrganizationDto>> getOrganizationTree(UUID rootId) {
         if (rootId != null && Validator.organizationNotFound(context, rootId))
-            throw new NotFoundException("Organization not found");
+            throw new NotFoundException("Головная организация не найдена");
         Organizations parentOrgs = ORGANIZATIONS.as("parentOrgs");
         Condition parentCondition = rootId == null ? parentOrgs.PARENT.isNull() : parentOrgs.PARENT.eq(rootId);
         return context
@@ -101,10 +124,13 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public void updateOrganization(OrganizationDto updatedOrganization) {
         if (Validator.organizationNotFound(context, updatedOrganization.getId()))
-            throw new NotFoundException("Organization not found");
-        if (updatedOrganization.getParent() != null
-                && Validator.organizationNotFound(context, updatedOrganization.getParent()))
-            throw new UnacceptableParamsException("Parent organization not found");
+            throw new NotFoundException("Обновляемая организация не найдена");
+        if (updatedOrganization.getParent() != null) {
+            if (updatedOrganization.getId().equals(updatedOrganization.getParent()))
+                throw new UnacceptableParamsException("Организация не может являться головной для самой себя, это как-то странно...");
+            if (Validator.organizationNotFound(context, updatedOrganization.getParent()))
+                throw new UnacceptableParamsException("Головная организация не найдена");
+        }
         context.update(ORGANIZATIONS)
                 .set(ORGANIZATIONS.NAME, updatedOrganization.getName())
                 .set(ORGANIZATIONS.PARENT, updatedOrganization.getParent())
