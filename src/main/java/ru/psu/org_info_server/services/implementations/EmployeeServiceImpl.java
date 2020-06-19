@@ -56,25 +56,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeInfoDto getEmployeeInfo(UUID id) {
-        CommonTableExpression<Record> employee = name("employee").as(
-                select().from(EMPLOYEES).where(EMPLOYEES.ID.eq(id))
-        );
-            Field<UUID> empId = employee.field(EMPLOYEES.ID);
-            Field<String> name = employee.field(EMPLOYEES.NAME);
-            Field<UUID> org = employee.field(EMPLOYEES.ORGANIZATION);
-            Field<UUID> chief = employee.field(EMPLOYEES.CHIEF);
-        Table<EmployeesRecord> chiefs = EMPLOYEES.as("chiefs");
-            Field<UUID> chiefId = chiefs.field(EMPLOYEES.ID);
-            Field<String> chiefName = chiefs.field(EMPLOYEES.NAME);
-        EmployeeInfoDto result = context
-                .with(employee)
-                .select(empId, name, chief, chiefName.as("chiefName"),
-                        org, ORGANIZATIONS.NAME.as("organizationName"))
-                .from(employee)
-                    .join(ORGANIZATIONS).on(org.eq(ORGANIZATIONS.ID))
-                    .leftJoin(chiefs).on(chief.eq(chiefId))
-                .fetchOneInto(EmployeeInfoDto.class);
+    public EmployeeDto getEmployeeInfo(UUID id) {
+        EmployeeDto result = context
+                .select()
+                .from(EMPLOYEES)
+                .where(EMPLOYEES.ID.eq(id))
+                .fetchOneInto(EmployeeDto.class);
         if (result == null)
             throw new NotFoundException("Запрашиваемый сотрудник не найден");
         return result;
@@ -82,11 +69,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
-    public ListChunk<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search) {
-        int count = context.selectCount().from(EMPLOYEES).where(EMPLOYEES.NAME.contains(search)).fetchOne(0, int.class);
+    public ListChunk<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search, UUID[] exclude) {
+        Condition selectCondition = EMPLOYEES.NAME.contains(search);
+        if (exclude != null)
+            selectCondition = selectCondition
+                    .and(EMPLOYEES.ID.notEqual(exclude[0])
+                            .and(EMPLOYEES.ORGANIZATION.eq(exclude[1])));
+        int count = context.selectCount().from(EMPLOYEES).where(selectCondition).fetchOne(0, int.class);
         CommonTableExpression<Record> subordinates = name("subordinates").as(
                 select().from(EMPLOYEES)
-                .where(EMPLOYEES.NAME.contains(search))
+                .where(selectCondition)
                 .limit(limit).offset(offset)
         );
             Field<UUID> subId = subordinates.field(EMPLOYEES.ID);
@@ -133,6 +125,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void updateEmployee(EmployeeDto updatedEmployee) {
         if (Validator.employeeNotFound(context, updatedEmployee.getId()))
             throw new NotFoundException("Обновляемый сотрудник не найден");
+        if (Validator.organizationNotFound(context, updatedEmployee.getOrganization()))
+            throw new UnacceptableParamsException("Организация не найдена");
+        if (Validator.employeeHasSubordinatesButOrgChanged(context, updatedEmployee.getId(), updatedEmployee.getOrganization()))
+            throw new UnacceptableParamsException("Сотрудник не может менять организацию, пока у него есть подчинённые");
         if (updatedEmployee.getChief() != null) {
             if (updatedEmployee.getId().equals(updatedEmployee.getChief()))
                 throw new UnacceptableParamsException("Сотрудник не может быть руководителем самому себе, это дурдом");
@@ -141,8 +137,6 @@ public class EmployeeServiceImpl implements EmployeeService {
             if (Validator.employeeNotInOrganization(context, updatedEmployee.getChief(), updatedEmployee.getOrganization()))
                 throw new UnacceptableParamsException("Руководитель из другой организации, что недопустимо");
         }
-        if (Validator.organizationNotFound(context, updatedEmployee.getOrganization()))
-            throw new UnacceptableParamsException("Организация не найдена");
         context.update(EMPLOYEES)
                 .set(EMPLOYEES.NAME, updatedEmployee.getName())
                 .set(EMPLOYEES.ORGANIZATION, updatedEmployee.getChief())

@@ -33,16 +33,17 @@ public class EmployeeController {
     }
 
     @GetMapping
-    public Response<EmployeeInfoDto> getEmployeeInfo(@RequestParam UUID id) {
-        return Response.<EmployeeInfoDto>builder().data(service.getEmployeeInfo(id)).build();
+    public Response<EmployeeDto> getEmployeeInfo(@RequestParam UUID id) {
+        return Response.<EmployeeDto>builder().data(service.getEmployeeInfo(id)).build();
     }
 
     @GetMapping("/list")
     public Response<ListChunk<EmployeeInfoDto>> getEmployeeList(@RequestParam(defaultValue = "0") @Min(0) int offset,
                                                                 @RequestParam Optional<@Min(0) Integer> limit,
-                                                                @RequestParam(defaultValue = "") String search) {
+                                                                @RequestParam(defaultValue = "") String search,
+                                                                @RequestParam(required = false) UUID[] exclude) {
         return Response.<ListChunk<EmployeeInfoDto>>builder()
-                .data(service.getEmployeeList(limit.orElse(null), offset, search)).build();
+                .data(service.getEmployeeList(limit.orElse(null), offset, search, exclude)).build();
     }
 
     

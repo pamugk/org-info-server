@@ -8,6 +8,10 @@ import static ru.psu.org_info_server.model.persistence.tables.Employees.EMPLOYEE
 import static ru.psu.org_info_server.model.persistence.tables.Organizations.ORGANIZATIONS;
 
 class Validator {
+    static boolean employeeHasSubordinatesButOrgChanged(DSLContext context, UUID empId, UUID orgId) {
+        return context.fetchExists(EMPLOYEES.where(EMPLOYEES.CHIEF.eq(empId).and(EMPLOYEES.ORGANIZATION.notEqual(orgId))));
+    }
+
     static boolean employeeNotFound(DSLContext context, UUID id) {
         return !context.fetchExists(EMPLOYEES.where(EMPLOYEES.ID.eq(id)));
     }

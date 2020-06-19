@@ -50,23 +50,12 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public OrgInfoDto getOrganizationInfo(UUID id) {
-        CommonTableExpression<Record> org = name("childrenOrg").as(
-                select().from(ORGANIZATIONS).where(ORGANIZATIONS.ID.eq(id))
-        );
-            Field<UUID> orgId = org.field(ORGANIZATIONS.ID);
-            Field<String> name = org.field(ORGANIZATIONS.NAME);
-            Field<UUID> parent = org.field(ORGANIZATIONS.PARENT);
-        Table<OrganizationsRecord> parentOrgs = ORGANIZATIONS.as("parentOrgs");
-            Field<UUID> parentId = parentOrgs.field(ORGANIZATIONS.ID);
-            Field<String> parentName = parentOrgs.field(ORGANIZATIONS.NAME);
-        OrgInfoDto result = context
-                .with(org)
-                .select(orgId, name, parent.as("parentId"), parentName.as("parentName"))
-                .from(org)
-                .leftJoin(parentOrgs)
-                .on(parent.eq(parentId))
-                .fetchOneInto(OrgInfoDto.class);
+    public OrganizationDto getOrganizationInfo(UUID id) {
+        OrganizationDto result = context
+                .select()
+                .from(ORGANIZATIONS)
+                .where(ORGANIZATIONS.ID.eq(id))
+                .fetchOneInto(OrganizationDto.class);
         if (result == null)
             throw new NotFoundException("Запрашиваемая организация не найдена");
         return result;
@@ -74,11 +63,14 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     @Transactional
-    public ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search) {
-        int count = context.selectCount().from(ORGANIZATIONS).where(ORGANIZATIONS.NAME.contains(search)).fetchOne(0, int.class);
+    public ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search, UUID exclude) {
+        Condition selectCondition = ORGANIZATIONS.NAME.contains(search);
+        if (exclude != null)
+            selectCondition = selectCondition.and(not(ORGANIZATIONS.ID.eq(exclude)));
+        int count = context.selectCount().from(ORGANIZATIONS).where(selectCondition).fetchOne(0, int.class);
         CommonTableExpression<Record> childrenOrgs = name("childrenOrgs").as(
                 select().from(ORGANIZATIONS)
-                .where(ORGANIZATIONS.NAME.contains(search))
+                .where(selectCondition)
                 .limit(limit).offset(offset)
         );
             Field<UUID> childId = childrenOrgs.field(ORGANIZATIONS.ID);
