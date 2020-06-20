@@ -52,7 +52,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new NotFoundException("Удаляемый сотрудник не найден");
         if (Validator.employeeHasChildren(context, id))
             throw new HasChildrenException("У сотрудника ещё есть подчинённые");
-        context.deleteFrom(EMPLOYEES).where(EMPLOYEES.ID.eq(id));
+        context.deleteFrom(EMPLOYEES).where(EMPLOYEES.ID.eq(id)).execute();
     }
 
     @Override

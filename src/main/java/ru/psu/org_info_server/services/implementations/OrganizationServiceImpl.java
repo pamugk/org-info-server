@@ -46,7 +46,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         if (Validator.organizationHasChildren(context, id))
             throw new HasChildrenException(
                     "У организации ещё есть дочерние элементы (организации или сотрудники)");
-        context.deleteFrom(ORGANIZATIONS).where(ORGANIZATIONS.ID.eq(id));
+        context.deleteFrom(ORGANIZATIONS).where(ORGANIZATIONS.ID.eq(id)).execute();
     }
 
     @Override
