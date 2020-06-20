@@ -126,6 +126,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         context.update(ORGANIZATIONS)
                 .set(ORGANIZATIONS.NAME, updatedOrganization.getName())
                 .set(ORGANIZATIONS.PARENT, updatedOrganization.getParent())
-                .where(ORGANIZATIONS.ID.eq(updatedOrganization.getId()));
+                .where(ORGANIZATIONS.ID.eq(updatedOrganization.getId()))
+                .execute();
     }
 }
