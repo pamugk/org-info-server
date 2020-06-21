@@ -1,19 +1,12 @@
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
-    hikari:
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
     url: jdbc:postgresql://ec2-54-247-71-245.eu-west-1.compute.amazonaws.com:5432/d6eeoui9l20qbi
     username: apokjvnuiweyyd
     password: 41a71207bc0f9d7520ce0a2558331997df81adc4c090697d5d2ccd9834035099
-    tomcat:
-      initial-size: 5
-      max-active: 10
-      max-idle: 5
-      min-idle: 2
-      remove-abandoned: true
+    hikari:
+      minimum-idle: 2
+      maximum-pool-size: 10
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.xml
   jooq:
