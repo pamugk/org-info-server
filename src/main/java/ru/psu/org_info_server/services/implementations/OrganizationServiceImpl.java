@@ -93,22 +93,23 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     @Transactional
-    public List<TreeNode<OrganizationDto>> getOrganizationTree(UUID rootId) {
-        if (rootId != null && Validator.organizationNotFound(context, rootId))
+    public Tree<OrganizationDto> getOrganizationTree(UUID rootId) {
+        if (Validator.organizationNotFound(context, rootId))
             throw new NotFoundException("Головная организация не найдена");
         Organizations parentOrgs = ORGANIZATIONS.as("parentOrgs");
         Condition parentCondition = rootId == null ? parentOrgs.PARENT.isNull() : parentOrgs.PARENT.eq(rootId);
-        return context
-               .select(parentOrgs.ID, parentOrgs.NAME,
-                       field(exists(selectFrom(ORGANIZATIONS).where(parentOrgs.ID.eq(ORGANIZATIONS.PARENT)))))
-               .from(parentOrgs)
-               .where(parentCondition)
-               .orderBy(parentOrgs.ID)
-               .fetchStream().map(
+        int count = context.selectCount().from(EMPLOYEES).where(parentCondition).fetchOne(0, int.class);
+        return Tree.<OrganizationDto>builder().nodes(context
+                .select(parentOrgs.ID, parentOrgs.NAME,
+                        field(exists(selectFrom(ORGANIZATIONS).where(parentOrgs.ID.eq(ORGANIZATIONS.PARENT)))))
+                .from(parentOrgs)
+                .where(parentCondition)
+                .orderBy(parentOrgs.ID)
+                .fetchStream().map(
                         record -> TreeNode.<OrganizationDto>builder().value(
                                 OrganizationDto.builder().id(record.value1()).name(record.value2()).parent(rootId).build()
                         ).hasChildren(record.value3()).build()
-               ).collect(Collectors.toList());
+                ).collect(Collectors.toList())).totalCount(count).build();
     }
 
     @Override

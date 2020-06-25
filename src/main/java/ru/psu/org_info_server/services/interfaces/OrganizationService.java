@@ -10,6 +10,6 @@ public interface OrganizationService {
     void deleteOrganization(UUID id);
     OrganizationDto getOrganizationInfo(UUID id);
     ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search);
-    List<TreeNode<OrganizationDto>> getOrganizationTree(UUID rootId);
+   Tree<OrganizationDto> getOrganizationTree(UUID rootId);
     void updateOrganization(OrganizationDto updatedOrganization);
 }

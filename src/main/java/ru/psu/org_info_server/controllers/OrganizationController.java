@@ -46,8 +46,8 @@ public class OrganizationController {
     }
 
     @GetMapping("/tree")
-    public Response<List<TreeNode<OrganizationDto>>> getOrganizationTree(@RequestParam(required = false) UUID id) {
-        return Response.<List<TreeNode<OrganizationDto>>>builder().data(service.getOrganizationTree(id)).build();
+    public Response<Tree<OrganizationDto>> getOrganizationTree(@RequestParam(required = false) UUID id) {
+        return Response.<Tree<OrganizationDto>>builder().data(service.getOrganizationTree(id)).build();
     }
 
     @PutMapping

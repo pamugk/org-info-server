@@ -101,12 +101,13 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
-    public List<TreeNode<EmployeeDto>> getEmployeeTree(UUID rootId, Number limit, Number offset) {
+    public Tree<EmployeeDto> getEmployeeTree(UUID rootId, Number limit, Number offset) {
         if (rootId != null && Validator.employeeNotFound(context, rootId))
             throw new NotFoundException("Руководитель не найден");
         Employees chiefs = EMPLOYEES.as("chiefs");
         Condition chiefCondition = rootId == null ? chiefs.CHIEF.isNull() : chiefs.CHIEF.eq(rootId);
-        return context
+        int count = context.selectCount().from(EMPLOYEES).where(chiefCondition).fetchOne(0, int.class);
+        return Tree.<EmployeeDto>builder().nodes(context
                 .select(chiefs.ID, chiefs.NAME, chiefs.ORGANIZATION,
                         field(exists(selectFrom(EMPLOYEES).where(chiefs.ID.eq(EMPLOYEES.CHIEF)))))
                 .from(chiefs)
@@ -118,7 +119,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                                 EmployeeDto.builder().id(record.value1())
                                         .name(record.value2()).organization(record.value3()).chief(rootId).build()
                         ).hasChildren(record.value4()).build()
-                ).collect(Collectors.toList());
+                ).collect(Collectors.toList())).totalCount(count).build();
     }
 
     @Override

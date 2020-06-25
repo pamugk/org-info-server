@@ -49,10 +49,10 @@ public class EmployeeController {
 
     
     @GetMapping("/tree")
-    public Response<List<TreeNode<EmployeeDto>>> getEmployeeTree(@RequestParam(required = false) UUID id,
+    public Response<Tree<EmployeeDto>> getEmployeeTree(@RequestParam(required = false) UUID id,
                                                                  @RequestParam(defaultValue = "0") @Min(0) int offset,
                                                                  @RequestParam @Min(0) Integer limit) {
-         return Response.<List<TreeNode<EmployeeDto>>>builder().data(service.getEmployeeTree(id, limit, offset)).build();
+         return Response.<Tree<EmployeeDto>>builder().data(service.getEmployeeTree(id, limit, offset)).build();
     }
 
     @PutMapping
