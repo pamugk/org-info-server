@@ -9,7 +9,7 @@ public interface OrganizationService {
     UUID createOrganization(OrganizationDto newOrganization);
     void deleteOrganization(UUID id);
     OrganizationDto getOrganizationInfo(UUID id);
-    ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search, UUID exclude);
+    ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search);
     List<TreeNode<OrganizationDto>> getOrganizationTree(UUID rootId);
     void updateOrganization(OrganizationDto updatedOrganization);
 }

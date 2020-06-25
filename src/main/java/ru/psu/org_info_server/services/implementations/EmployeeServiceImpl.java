@@ -69,12 +69,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
-    public ListChunk<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search, UUID[] exclude) {
+    public ListChunk<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search, String organization, UUID orgId) {
         Condition selectCondition = EMPLOYEES.NAME.contains(search);
-        if (exclude != null)
-            selectCondition = selectCondition
-                    .and(EMPLOYEES.ID.notEqual(exclude[0])
-                            .and(EMPLOYEES.ORGANIZATION.eq(exclude[1])));
+        if (orgId != null)
+            selectCondition = selectCondition.and(EMPLOYEES.ORGANIZATION.eq(orgId));
         int count = context.selectCount().from(EMPLOYEES).where(selectCondition).fetchOne(0, int.class);
         CommonTableExpression<Record> subordinates = name("subordinates").as(
                 select().from(EMPLOYEES)
@@ -95,6 +93,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .from(subordinates)
                     .join(ORGANIZATIONS).on(subOrgId.eq(ORGANIZATIONS.ID))
                     .leftJoin(chiefs).on(subChief.eq(chiefId))
+                .where(ORGANIZATIONS.NAME.contains(organization))
                 .orderBy(subId)
                 .fetchInto(EmployeeInfoDto.class);
         return ListChunk.<EmployeeInfoDto>builder().totalCount(count).dataChunk(chunk).build();
@@ -102,7 +101,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
-    public List<TreeNode<EmployeeDto>> getEmployeeTree(UUID rootId) {
+    public List<TreeNode<EmployeeDto>> getEmployeeTree(UUID rootId, Number limit, Number offset) {
         if (rootId != null && Validator.employeeNotFound(context, rootId))
             throw new NotFoundException("Руководитель не найден");
         Employees chiefs = EMPLOYEES.as("chiefs");
@@ -113,6 +112,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .from(chiefs)
                 .where(chiefCondition)
                 .orderBy(chiefs.ID)
+                .limit(limit).offset(offset)
                 .fetchStream().map(
                         record -> TreeNode.<EmployeeDto>builder().value(
                                 EmployeeDto.builder().id(record.value1())

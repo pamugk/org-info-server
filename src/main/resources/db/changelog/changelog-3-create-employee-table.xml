@@ -19,9 +19,7 @@
             <column name="name" type="VARCHAR">
                 <constraints nullable="false"/>
             </column>
-            <column name="organization" type="UUID">
-                <constraints nullable="false"/>
-            </column>
+            <column name="organization" type="UUID"/>
             <column name="chief" type="UUID"/>
         </createTable>
         <addForeignKeyConstraint baseTableName="employees" baseColumnNames="organization" baseTableSchemaName="info"

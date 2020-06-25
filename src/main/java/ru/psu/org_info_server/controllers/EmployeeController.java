@@ -39,17 +39,20 @@ public class EmployeeController {
 
     @GetMapping("/list")
     public Response<ListChunk<EmployeeInfoDto>> getEmployeeList(@RequestParam(defaultValue = "0") @Min(0) int offset,
-                                                                @RequestParam Optional<@Min(0) Integer> limit,
+                                                                @RequestParam @Min(0) Integer limit,
                                                                 @RequestParam(defaultValue = "") String search,
-                                                                @RequestParam(required = false) UUID[] exclude) {
+                                                                @RequestParam(defaultValue = "") String organization,
+                                                                @RequestParam(required = false) UUID orgId) {
         return Response.<ListChunk<EmployeeInfoDto>>builder()
-                .data(service.getEmployeeList(limit.orElse(null), offset, search, exclude)).build();
+                .data(service.getEmployeeList(limit, offset, search, organization, orgId)).build();
     }
 
     
     @GetMapping("/tree")
-    public Response<List<TreeNode<EmployeeDto>>> getEmployeeTree(@RequestParam(required = false) UUID id) {
-         return Response.<List<TreeNode<EmployeeDto>>>builder().data(service.getEmployeeTree(id)).build();
+    public Response<List<TreeNode<EmployeeDto>>> getEmployeeTree(@RequestParam(required = false) UUID id,
+                                                                 @RequestParam(defaultValue = "0") @Min(0) int offset,
+                                                                 @RequestParam @Min(0) Integer limit) {
+         return Response.<List<TreeNode<EmployeeDto>>>builder().data(service.getEmployeeTree(id, limit, offset)).build();
     }
 
     @PutMapping

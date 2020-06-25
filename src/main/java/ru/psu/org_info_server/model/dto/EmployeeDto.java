@@ -20,7 +20,6 @@ public class EmployeeDto {
     private UUID id;
     @NotBlank
     private String name;
-    @NotNull
     private UUID organization;
     private UUID chief;
 }

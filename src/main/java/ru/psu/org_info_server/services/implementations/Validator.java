@@ -9,7 +9,11 @@ import static ru.psu.org_info_server.model.persistence.tables.Organizations.ORGA
 
 class Validator {
     static boolean employeeHasSubordinatesButOrgChanged(DSLContext context, UUID empId, UUID orgId) {
-        return context.fetchExists(EMPLOYEES.where(EMPLOYEES.CHIEF.eq(empId).and(EMPLOYEES.ORGANIZATION.notEqual(orgId))));
+        return context.fetchExists(EMPLOYEES.where(
+                EMPLOYEES.CHIEF.eq(empId)
+                .and(EMPLOYEES.ORGANIZATION.isNotNull())
+                .and(EMPLOYEES.ORGANIZATION.notEqual(orgId)))
+        );
     }
 
     static boolean employeeNotFound(DSLContext context, UUID id) {
@@ -17,7 +21,8 @@ class Validator {
     }
 
     static boolean employeeNotInOrganization(DSLContext context, UUID employeeId, UUID orgId) {
-        return !context.fetchExists(EMPLOYEES.where(EMPLOYEES.ID.eq(employeeId).and(EMPLOYEES.ORGANIZATION.eq(orgId))));
+        return orgId != null &&
+                !context.fetchExists(EMPLOYEES.where(EMPLOYEES.ID.eq(employeeId).and(EMPLOYEES.ORGANIZATION.eq(orgId))));
     }
 
     static boolean employeeHasChildren(DSLContext context, UUID id) {
@@ -30,6 +35,6 @@ class Validator {
     }
 
     static boolean organizationNotFound(DSLContext context, UUID id) {
-        return !context.fetchExists(ORGANIZATIONS.where(ORGANIZATIONS.ID.eq(id)));
+        return id != null && !context.fetchExists(ORGANIZATIONS.where(ORGANIZATIONS.ID.eq(id)));
     }
 }
