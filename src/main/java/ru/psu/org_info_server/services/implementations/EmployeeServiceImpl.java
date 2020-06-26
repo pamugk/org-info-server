@@ -86,17 +86,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         Table<EmployeesRecord> chiefs = EMPLOYEES.as("chiefs");
             Field<UUID> chiefId = chiefs.field(EMPLOYEES.ID);
             Field<String> chiefName = chiefs.field(EMPLOYEES.NAME);
-        List<EmployeeInfoDto> chunk = context
-                .with(subordinates)
-                .select(subId, subName, subChief, chiefName.as("chiefName"),
-                        subOrgId, ORGANIZATIONS.NAME.as("organizationName"))
-                .from(subordinates)
-                    .leftJoin(ORGANIZATIONS).on(subOrgId.eq(ORGANIZATIONS.ID))
-                    .leftJoin(chiefs).on(subChief.eq(chiefId))
-                .where(ORGANIZATIONS.NAME.contains(organization))
-                .orderBy(chiefName, subName)
-                .fetchInto(EmployeeInfoDto.class);
-        return ListChunk.<EmployeeInfoDto>builder().totalCount(count).dataChunk(chunk).build();
+        return ListChunk.<EmployeeInfoDto>builder().dataChunk(
+                context
+                        .with(subordinates)
+                        .select(subId, subName, subChief, chiefName.as("chiefName"),
+                                subOrgId, ORGANIZATIONS.NAME.as("organizationName"))
+                        .from(subordinates)
+                            .leftJoin(ORGANIZATIONS).on(subOrgId.eq(ORGANIZATIONS.ID))
+                            .leftJoin(chiefs).on(subChief.eq(chiefId))
+                        .where(ORGANIZATIONS.NAME.isNull().or(ORGANIZATIONS.NAME.contains(organization)))
+                        .orderBy(chiefName, subName)
+                        .fetchInto(EmployeeInfoDto.class)
+        ).totalCount(count).build();
     }
 
     @Override
