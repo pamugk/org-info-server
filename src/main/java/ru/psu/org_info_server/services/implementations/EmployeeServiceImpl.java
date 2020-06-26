@@ -106,7 +106,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new NotFoundException("Руководитель не найден");
         Employees chiefs = EMPLOYEES.as("chiefs");
         Condition chiefCondition = rootId == null ? chiefs.CHIEF.isNull() : chiefs.CHIEF.eq(rootId);
-        int count = context.selectCount().from(EMPLOYEES).where(chiefCondition).fetchOne(0, int.class);
+        int count = context.selectCount().from(chiefs).where(chiefCondition).fetchOne(0, int.class);
         return Tree.<EmployeeDto>builder().nodes(context
                 .select(chiefs.ID, chiefs.NAME, chiefs.ORGANIZATION,
                         field(exists(selectFrom(EMPLOYEES).where(chiefs.ID.eq(EMPLOYEES.CHIEF)))))

@@ -98,7 +98,7 @@ public class OrganizationServiceImpl implements OrganizationService {
             throw new NotFoundException("Головная организация не найдена");
         Organizations parentOrgs = ORGANIZATIONS.as("parentOrgs");
         Condition parentCondition = rootId == null ? parentOrgs.PARENT.isNull() : parentOrgs.PARENT.eq(rootId);
-        int count = context.selectCount().from(EMPLOYEES).where(parentCondition).fetchOne(0, int.class);
+        int count = context.selectCount().from(parentOrgs).where(parentCondition).fetchOne(0, int.class);
         return Tree.<OrganizationDto>builder().nodes(context
                 .select(parentOrgs.ID, parentOrgs.NAME,
                         field(exists(selectFrom(ORGANIZATIONS).where(parentOrgs.ID.eq(ORGANIZATIONS.PARENT)))))
