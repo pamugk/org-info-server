@@ -94,7 +94,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                     .join(ORGANIZATIONS).on(subOrgId.eq(ORGANIZATIONS.ID))
                     .leftJoin(chiefs).on(subChief.eq(chiefId))
                 .where(ORGANIZATIONS.NAME.contains(organization))
-                .orderBy(subId)
+                .orderBy(chiefName, subName)
                 .fetchInto(EmployeeInfoDto.class);
         return ListChunk.<EmployeeInfoDto>builder().totalCount(count).dataChunk(chunk).build();
     }
@@ -112,7 +112,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                         field(exists(selectFrom(EMPLOYEES).where(chiefs.ID.eq(EMPLOYEES.CHIEF)))))
                 .from(chiefs)
                 .where(chiefCondition)
-                .orderBy(chiefs.ID)
+                .orderBy(chiefs.NAME)
                 .limit(limit).offset(offset)
                 .fetchStream().map(
                         record -> TreeNode.<EmployeeDto>builder().value(

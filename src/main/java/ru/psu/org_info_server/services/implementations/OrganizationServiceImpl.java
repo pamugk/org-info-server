@@ -86,7 +86,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                     .leftJoin(parentOrgs).on(childParent.eq(parentId))
                     .leftJoin(EMPLOYEES).on(childId.eq(EMPLOYEES.ORGANIZATION))
                 .groupBy(childId, childName, parentId, parentName)
-                .orderBy(childId)
+                .orderBy(parentName, childName)
                 .fetchInto(OrgInfoDto.class);
         return ListChunk.<OrgInfoDto>builder().totalCount(count).dataChunk(chunk).build();
     }
@@ -104,7 +104,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                         field(exists(selectFrom(ORGANIZATIONS).where(parentOrgs.ID.eq(ORGANIZATIONS.PARENT)))))
                 .from(parentOrgs)
                 .where(parentCondition)
-                .orderBy(parentOrgs.ID)
+                .orderBy(parentOrgs.NAME)
                 .fetchStream().map(
                         record -> TreeNode.<OrganizationDto>builder().value(
                                 OrganizationDto.builder().id(record.value1()).name(record.value2()).parent(rootId).build()

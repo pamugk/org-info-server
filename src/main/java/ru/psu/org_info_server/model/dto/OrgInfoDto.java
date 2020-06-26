@@ -1,12 +1,13 @@
 package ru.psu.org_info_server.model.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrgInfoDto {
     private UUID id;
     private String name;

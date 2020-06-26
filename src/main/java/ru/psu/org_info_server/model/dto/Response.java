@@ -1,12 +1,11 @@
 package ru.psu.org_info_server.model.dto;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
+@Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Response<T> {
     private T data;
 }
