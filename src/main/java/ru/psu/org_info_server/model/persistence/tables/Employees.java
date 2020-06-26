@@ -32,7 +32,7 @@ import ru.psu.org_info_server.model.persistence.tables.records.EmployeesRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Employees extends TableImpl<EmployeesRecord> {
 
-    private static final long serialVersionUID = 1469810224;
+    private static final long serialVersionUID = -1207501359;
 
     /**
      * The reference instance of <code>info.employees</code>
@@ -60,7 +60,7 @@ public class Employees extends TableImpl<EmployeesRecord> {
     /**
      * The column <code>info.employees.organization</code>.
      */
-    public final TableField<EmployeesRecord, UUID> ORGANIZATION = createField(DSL.name("organization"), org.jooq.impl.SQLDataType.UUID.nullable(false), this, "");
+    public final TableField<EmployeesRecord, UUID> ORGANIZATION = createField(DSL.name("organization"), org.jooq.impl.SQLDataType.UUID, this, "");
 
     /**
      * The column <code>info.employees.chief</code>.
