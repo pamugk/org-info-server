@@ -156,7 +156,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
         context.update(EMPLOYEES)
                 .set(EMPLOYEES.NAME, updatedEmployee.getName())
-                .set(EMPLOYEES.ORGANIZATION, updatedEmployee.getChief())
+                .set(EMPLOYEES.ORGANIZATION, updatedEmployee.getOrganization())
                 .set(EMPLOYEES.CHIEF, updatedEmployee.getChief())
                 .where(EMPLOYEES.ID.eq(updatedEmployee.getId()))
                 .execute();
