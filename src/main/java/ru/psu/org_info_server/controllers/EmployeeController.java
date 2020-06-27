@@ -42,9 +42,10 @@ public class EmployeeController {
                                                                 @RequestParam @Min(0) Integer limit,
                                                                 @RequestParam(defaultValue = "") String search,
                                                                 @RequestParam(defaultValue = "") String organization,
+                                                                @RequestParam(required = false) UUID exclude,
                                                                 @RequestParam(required = false) UUID orgId) {
         return Response.<ListChunk<EmployeeInfoDto>>builder()
-                .data(service.getEmployeeList(limit, offset, search, organization, orgId)).build();
+                .data(service.getEmployeeList(limit, offset, search, organization, exclude, orgId)).build();
     }
 
     

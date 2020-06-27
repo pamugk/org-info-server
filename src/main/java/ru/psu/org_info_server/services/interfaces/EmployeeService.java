@@ -9,7 +9,10 @@ public interface EmployeeService {
     UUID createEmployee(EmployeeDto newEmployee);
     void deleteEmployee(UUID id);
     EmployeeDto getEmployeeInfo(UUID id);
-    ListChunk<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search, String organization, UUID orgId);
+    ListChunk<EmployeeInfoDto> getEmployeeList(
+            Number limit, Number offset,
+            String search, String organization,
+            UUID exclude, UUID orgId);
     Tree<EmployeeDto> getEmployeeTree(UUID rootId, Number limit, Number offset);
     void updateEmployee(EmployeeDto updatedEmployee);
 }

@@ -40,9 +40,10 @@ public class OrganizationController {
     @GetMapping("/list")
     public Response<ListChunk<OrgInfoDto>> getOrganizationList(@RequestParam(defaultValue = "0") @Min(0) int offset,
                                                                @RequestParam Optional<@Min(0) Integer> limit,
-                                                               @RequestParam(defaultValue = "") String search) {
+                                                               @RequestParam(defaultValue = "") String search,
+                                                               @RequestParam(required = false) UUID exclude) {
         return Response.<ListChunk<OrgInfoDto>>builder()
-                .data(service.getOrganizationList(limit.orElse(null), offset, search)).build();
+                .data(service.getOrganizationList(limit.orElse(null), offset, search, exclude)).build();
     }
 
     @GetMapping("/tree")

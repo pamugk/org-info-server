@@ -63,8 +63,10 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     @Transactional
-    public ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search) {
+    public ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search, UUID exclude) {
         Condition selectCondition = ORGANIZATIONS.NAME.contains(search);
+        if (exclude != null)
+            selectCondition = selectCondition.and(EMPLOYEES.ID.notEqual(exclude));
         int count = context.selectCount().from(ORGANIZATIONS).where(selectCondition).fetchOne(0, int.class);
         CommonTableExpression<Record> childrenOrgs = name("childrenOrgs").as(
                 select().from(ORGANIZATIONS)

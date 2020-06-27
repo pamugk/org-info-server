@@ -69,34 +69,48 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
-    public ListChunk<EmployeeInfoDto> getEmployeeList(Number limit, Number offset, String search, String organization, UUID orgId) {
+    public ListChunk<EmployeeInfoDto> getEmployeeList(
+            Number limit, Number offset,
+            String search, String organization,
+            UUID exclude, UUID orgId
+    ) {
         Condition selectCondition = EMPLOYEES.NAME.contains(search);
+        if (exclude != null)
+            selectCondition = selectCondition.and(EMPLOYEES.ID.notEqual(exclude));
         if (orgId != null)
             selectCondition = selectCondition.and(EMPLOYEES.ORGANIZATION.eq(orgId));
-        int count = context.selectCount().from(EMPLOYEES).where(selectCondition).fetchOne(0, int.class);
-        CommonTableExpression<Record> subordinates = name("subordinates").as(
-                select().from(EMPLOYEES)
+        if (!organization.equals(""))
+            selectCondition = selectCondition.and(ORGANIZATIONS.NAME.contains(organization));
+        int count = context.selectCount()
+                .from(EMPLOYEES)
+                .leftJoin(ORGANIZATIONS).on(EMPLOYEES.ORGANIZATION.eq(ORGANIZATIONS.ID))
+                .where(selectCondition)
+                .fetchOne(0, int.class);
+        CommonTableExpression<Record5<UUID, String, UUID, String, UUID>> subordinates = name("subordinates").as(
+                select(
+                        EMPLOYEES.ID, EMPLOYEES.NAME,
+                        EMPLOYEES.ORGANIZATION, ORGANIZATIONS.NAME.as("organizationName"),
+                        EMPLOYEES.CHIEF
+                ).from(EMPLOYEES)
+                        .leftJoin(ORGANIZATIONS).on(EMPLOYEES.ORGANIZATION.eq(ORGANIZATIONS.ID))
                 .where(selectCondition)
                 .limit(limit).offset(offset)
         );
             Field<UUID> subId = subordinates.field(EMPLOYEES.ID);
             Field<String> subName = subordinates.field(EMPLOYEES.NAME);
             Field<UUID> subOrgId = subordinates.field(EMPLOYEES.ORGANIZATION);
+            Field<String> orgName = subordinates.field(3, String.class);
             Field<UUID> subChief = subordinates.field(EMPLOYEES.CHIEF);
         Table<EmployeesRecord> chiefs = EMPLOYEES.as("chiefs");
             Field<UUID> chiefId = chiefs.field(EMPLOYEES.ID);
             Field<String> chiefName = chiefs.field(EMPLOYEES.NAME);
-        Condition orgCondition = "".equals(organization) ? condition(true) : ORGANIZATIONS.NAME.contains(organization);
         return ListChunk.<EmployeeInfoDto>builder().dataChunk(
                 context
                         .with(subordinates)
-                        .select(subId, subName, subChief, chiefName.as("chiefName"),
-                                subOrgId, ORGANIZATIONS.NAME.as("organizationName"))
+                        .select(subId, subName, subChief, chiefName.as("chiefName"), subOrgId, orgName)
                         .from(subordinates)
-                            .leftJoin(ORGANIZATIONS).on(subOrgId.eq(ORGANIZATIONS.ID))
                             .leftJoin(chiefs).on(subChief.eq(chiefId))
-                        .where(orgCondition)
-                        .orderBy(ORGANIZATIONS.NAME, subOrgId, subName)
+                        .orderBy(orgName, subOrgId, subName)
                         .fetchInto(EmployeeInfoDto.class)
         ).totalCount(count).build();
     }
