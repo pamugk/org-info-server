@@ -86,6 +86,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         Table<EmployeesRecord> chiefs = EMPLOYEES.as("chiefs");
             Field<UUID> chiefId = chiefs.field(EMPLOYEES.ID);
             Field<String> chiefName = chiefs.field(EMPLOYEES.NAME);
+        Condition orgCondition = "".equals(organization) ? condition(true) : ORGANIZATIONS.NAME.contains(organization);
         return ListChunk.<EmployeeInfoDto>builder().dataChunk(
                 context
                         .with(subordinates)
@@ -94,8 +95,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                         .from(subordinates)
                             .leftJoin(ORGANIZATIONS).on(subOrgId.eq(ORGANIZATIONS.ID))
                             .leftJoin(chiefs).on(subChief.eq(chiefId))
-                        .where(ORGANIZATIONS.NAME.isNull().or(ORGANIZATIONS.NAME.contains(organization)))
-                        .orderBy(chiefName, subName)
+                        .where(orgCondition)
+                        .orderBy(ORGANIZATIONS.NAME, subOrgId, subName)
                         .fetchInto(EmployeeInfoDto.class)
         ).totalCount(count).build();
     }
