@@ -30,6 +30,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
     public UUID createEmployee(EmployeeDto newEmployee) {
         if (Validator.organizationNotFound(context, newEmployee.getOrganization()))
             throw new UnacceptableParamsException("Организация не найдена");
@@ -47,6 +48,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
     public void deleteEmployee(UUID id) {
         if (Validator.employeeNotFound(context, id))
             throw new NotFoundException("Удаляемый сотрудник не найден");
@@ -68,7 +70,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @Transactional
     public ListChunk<EmployeeInfoDto> getEmployeeList(
             Number limit, Number offset,
             String search, String organization,
@@ -116,7 +117,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    @Transactional
     public Tree<EmployeeDto> getEmployeeTree(UUID rootId, Number limit, Number offset) {
         if (rootId != null && Validator.employeeNotFound(context, rootId))
             throw new NotFoundException("Руководитель не найден");
@@ -139,6 +139,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
     public void updateEmployee(EmployeeDto updatedEmployee) {
         if (Validator.employeeNotFound(context, updatedEmployee.getId()))
             throw new NotFoundException("Обновляемый сотрудник не найден");

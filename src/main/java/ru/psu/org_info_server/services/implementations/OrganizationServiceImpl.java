@@ -30,6 +30,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
+    @Transactional
     public UUID createOrganization(OrganizationDto newOrganization) {
         if (newOrganization.getParent() != null && Validator.organizationNotFound(context, newOrganization.getParent()))
             throw new UnacceptableParamsException("Головная организация не найдена");
@@ -40,6 +41,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
+    @Transactional
     public void deleteOrganization(UUID id) {
         if (Validator.organizationNotFound(context, id))
             throw new NotFoundException("Organization not found");
@@ -62,7 +64,6 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    @Transactional
     public ListChunk<OrgInfoDto> getOrganizationList(Number limit, Number offset, String search, UUID exclude) {
         Condition selectCondition = ORGANIZATIONS.NAME.contains(search);
         if (exclude != null)
@@ -94,7 +95,6 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    @Transactional
     public Tree<OrganizationDto> getOrganizationTree(UUID rootId) {
         if (Validator.organizationNotFound(context, rootId))
             throw new NotFoundException("Головная организация не найдена");
@@ -115,6 +115,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
+    @Transactional
     public void updateOrganization(OrganizationDto updatedOrganization) {
         if (Validator.organizationNotFound(context, updatedOrganization.getId()))
             throw new NotFoundException("Обновляемая организация не найдена");
